@@ -3,10 +3,7 @@ package com.github.pires.obd.reader.activity;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.content.Context;
 import android.content.SharedPreferences;
-import android.location.LocationManager;
-import android.location.LocationProvider;
 import android.os.Bundle;
 import android.preference.CheckBoxPreference;
 import android.preference.EditTextPreference;
@@ -15,7 +12,6 @@ import android.preference.Preference;
 import android.preference.Preference.OnPreferenceChangeListener;
 import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceActivity;
-import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
 import android.widget.Toast;
 
@@ -42,12 +38,10 @@ public class ConfigActivity extends PreferenceActivity implements OnPreferenceCh
     public static final String IMPERIAL_UNITS_KEY = "imperial_units_preference";
     public static final String COMMANDS_SCREEN_KEY = "obd_commands_screen";
     public static final String PROTOCOLS_LIST_KEY = "obd_protocols_preference";
-    public static final String ENABLE_GPS_KEY = "enable_gps_preference";
     public static final String GPS_UPDATE_PERIOD_KEY = "gps_update_period_preference";
     public static final String GPS_DISTANCE_PERIOD_KEY = "gps_distance_period_preference";
     public static final String ENABLE_BT_KEY = "enable_bluetooth_preference";
     public static final String MAX_FUEL_ECON_KEY = "max_fuel_econ_preference";
-    public static final String CONFIG_READER_KEY = "reader_config_preference";
     public static final String ENABLE_FULL_LOGGING_KEY = "enable_full_logging";
     public static final String DIRECTORY_FULL_LOGGING_KEY = "dirname_full_logging";
     public static final String DEV_EMAIL_KEY = "dev_email";
@@ -73,121 +67,6 @@ public class ConfigActivity extends PreferenceActivity implements OnPreferenceCh
         return period;
     }
 
-    /**
-     * @param prefs
-     * @return
-     */
-    public static double getVolumetricEfficieny(SharedPreferences prefs) {
-        String veString = prefs.getString(ConfigActivity.VOLUMETRIC_EFFICIENCY_KEY, ".85");
-        double ve = 0.85;
-        try {
-            ve = Double.parseDouble(veString);
-        } catch (Exception e) {
-        }
-        return ve;
-    }
-
-    /**
-     * @param prefs
-     * @return
-     */
-    public static double getEngineDisplacement(SharedPreferences prefs) {
-        String edString = prefs.getString(ConfigActivity.ENGINE_DISPLACEMENT_KEY, "1.6");
-        double ed = 1.6;
-        try {
-            ed = Double.parseDouble(edString);
-        } catch (Exception e) {
-        }
-        return ed;
-    }
-
-    /**
-     * @param prefs
-     * @return
-     */
-    public static ArrayList<ObdCommand> getObdCommands(SharedPreferences prefs) {
-        ArrayList<ObdCommand> cmds = ObdConfig.getCommands();
-        ArrayList<ObdCommand> ucmds = new ArrayList<>();
-        for (int i = 0; i < cmds.size(); i++) {
-            ObdCommand cmd = cmds.get(i);
-            boolean selected = prefs.getBoolean(cmd.getName(), true);
-            if (selected)
-                ucmds.add(cmd);
-        }
-        return ucmds;
-    }
-
-    /**
-     * @param prefs
-     * @return
-     */
-    public static double getMaxFuelEconomy(SharedPreferences prefs) {
-        String maxStr = prefs.getString(ConfigActivity.MAX_FUEL_ECON_KEY, "70");
-        double max = 70;
-        try {
-            max = Double.parseDouble(maxStr);
-        } catch (Exception e) {
-        }
-        return max;
-    }
-
-    /**
-     * @param prefs
-     * @return
-     */
-    public static String[] getReaderConfigCommands(SharedPreferences prefs) {
-        String cmdsStr = prefs.getString(CONFIG_READER_KEY, "atsp0\natz");
-        String[] cmds = cmdsStr.split("\n");
-        return cmds;
-    }
-
-    /**
-     * Minimum time between location updates, in milliseconds
-     *
-     * @param prefs
-     * @return
-     */
-    public static int getGpsUpdatePeriod(SharedPreferences prefs) {
-        String periodString = prefs
-                .getString(ConfigActivity.GPS_UPDATE_PERIOD_KEY, "1"); // 1 as in seconds
-        int period = 1000; // by default 1000ms
-
-        try {
-            period = (int) (Double.parseDouble(periodString) * 1000);
-        } catch (Exception e) {
-        }
-
-        if (period <= 0) {
-            period = 1000;
-        }
-
-        return period;
-    }
-
-    /**
-     * Min Distance between location updates, in meters
-     *
-     * @param prefs
-     * @return
-     */
-    public static float getGpsDistanceUpdatePeriod(SharedPreferences prefs) {
-        String periodString = prefs
-                .getString(ConfigActivity.GPS_DISTANCE_PERIOD_KEY, "5"); // 5 as in meters
-        float period = 5; // by default 5 meters
-
-        try {
-            period = Float.parseFloat(periodString);
-        } catch (Exception e) {
-        }
-
-        if (period <= 0) {
-            period = 5;
-        }
-
-        return period;
-    }
-
-
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
@@ -195,8 +74,6 @@ public class ConfigActivity extends PreferenceActivity implements OnPreferenceCh
      * Read preferences resources available at res/xml/preferences.xml
      */
         addPreferencesFromResource(R.xml.preferences);
-
-        checkGps();
 
         ArrayList<CharSequence> pairedDeviceStrings = new ArrayList<>();
         ArrayList<CharSequence> vals = new ArrayList<>();
@@ -316,24 +193,5 @@ public class ConfigActivity extends PreferenceActivity implements OnPreferenceCh
             }
         }
         return false;
-    }
-
-    private void checkGps() {
-        LocationManager mLocService = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        if (mLocService != null) {
-            LocationProvider mLocProvider = mLocService.getProvider(LocationManager.GPS_PROVIDER);
-            if (mLocProvider == null) {
-                hideGPSCategory();
-            }
-        }
-    }
-
-    private void hideGPSCategory() {
-        PreferenceScreen preferenceScreen = getPreferenceScreen();
-        PreferenceCategory preferenceCategory = (PreferenceCategory) findPreference(getResources().getString(R.string.pref_gps_category));
-        if (preferenceCategory != null) {
-            preferenceCategory.removeAll();
-            preferenceScreen.removePreference((Preference) preferenceCategory);
-        }
     }
 }
